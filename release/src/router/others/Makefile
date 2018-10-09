@@ -34,6 +34,12 @@ ifeq ($(RTCONFIG_OPENVPN),y)
 	install -m 0700 -D updown.sh $(INSTALLDIR)/usr/sbin
 endif
 
+# Entware setup script
+	install -m 0700 entware-setup.sh $(INSTALLDIR)/usr/sbin
+
+# Postconf helper script
+	install -m 0755 helper.sh $(INSTALLDIR)/usr/sbin
+
 ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTN56UB2)$(RTAC54U)$(RTAC1200)$(RTAC1200GA1)$(RTAC1200GU)$(RTN11PB1)$(RTAC85U)$(RPAC87)$(RTN800HP),y)
 # for read/write Ralink PHY registers
 	install -D mii_mgr $(INSTALLDIR)/bin/mii_mgr

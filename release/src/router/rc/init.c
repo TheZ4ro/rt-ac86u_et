@@ -10370,6 +10370,7 @@ int init_main(int argc, char *argv[])
 		asm1042_upgrade(1);	// check whether upgrade firmware of ASM1042
 #endif
 
+		run_custom_script("init-start", NULL);
 		state = SIGUSR2;	/* START */
 
 #ifdef RTCONFIG_USB

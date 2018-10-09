@@ -1636,7 +1636,17 @@ void start_dnsmasq(void)
 	if (nvram_match("dhcp_static_x","1")) {
 		write_static_leases(fp);
 	}
+
+	/* Protect against VU#598349 */
+	fprintf(fp,"dhcp-name-match=set:wpad-ignore,wpad\n"
+		   "dhcp-ignore-names=tag:wpad-ignore\n");
+
+	append_custom_config("dnsmasq.conf",fp);
 	fclose(fp);
+
+	use_custom_config("dnsmasq.conf","/etc/dnsmasq.conf");
+	run_postconf("dnsmasq","/etc/dnsmasq.conf");
+	chmod("/etc/dnsmasq.conf", 0644);
 
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
@@ -3187,16 +3197,21 @@ start_ddns(void)
 		char *argv[] = { "ez-ipupdate", "-S", service, "-i", wan_ifname,
 				"-h", host, "-A", "2", "-s", nserver,
 				"-e", "/sbin/ddns_updated", "-b", "/tmp/ddns.cache", NULL };
-		_eval(argv, NULL, 0, &pid);
-	} else if (*service) {
-		char *argv[] = { "ez-ipupdate", "-S", service, "-i", wan_ifname, "-h", host,
-		     "-u", usrstr, wild ? "-w" : "", "-e", "/sbin/ddns_updated",
-		     "-b", "/tmp/ddns.cache", NULL };
-		_eval(argv, NULL, 0, &pid);
+			_eval(argv, NULL, 0, &pid);
+		} else if (*service) {
+			char *argv[] = { "ez-ipupdate", "-S", service, "-i", wan_ifname, "-h", host,
+			     "-u", usrstr, wild ? "-w" : "", "-e", "/sbin/ddns_updated",
+			     "-b", "/tmp/ddns.cache", NULL };
+			_eval(argv, NULL, 0, &pid);
+		}
+	} else {	// Custom DDNS
+		// Block until it completes and updates the DDNS update results in nvram
+		run_custom_script_blocking("ddns-start", wan_ip, NULL);
+		return 0;
 	}
 
-	return 0;
-}
+	run_custom_script("ddns-start", wan_ip);
+	return 0;}
 
 void
 stop_ddns(void)
@@ -7774,6 +7789,9 @@ start_services(void)
 	start_dblog(0);
 #endif /* RTCONFIG_DBLOG */
 #endif /* RTCONFIG_PUSH_EMAIL */
+
+	run_custom_script("services-start", NULL);
+
 	return 0;
 }
 
@@ -7789,6 +7807,8 @@ stop_logger(void)
 void
 stop_services(void)
 {
+	run_custom_script("services-stop", NULL);
+
 #ifdef RTCONFIG_ADTBW
 	stop_adtbw();
 #endif
@@ -13343,6 +13363,8 @@ _dprintf("nat_rule: the nat rule file was not ready. wait %d seconds...\n", retr
 
 	setup_ct_timeout(TRUE);
 	setup_udp_timeout(TRUE);
+
+	run_custom_script("nat-start", NULL);
 
 	return NAT_STATE_NORMAL;
 }

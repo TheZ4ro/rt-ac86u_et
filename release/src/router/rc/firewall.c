@@ -5943,6 +5943,8 @@ int start_firewall(int wanunit, int lanunit)
 leave:
 	file_unlock(lock);
 
+	run_custom_script("firewall-start", wan_if);
+
 	return 0;
 }
 

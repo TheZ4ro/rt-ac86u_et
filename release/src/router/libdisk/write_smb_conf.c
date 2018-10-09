@@ -883,8 +883,16 @@ int main(int argc, char *argv[])
 	}
 
 confpage:
-	if(fp != NULL)
+	if(fp != NULL) {
+
+		append_custom_config("smb.conf", fp);
 		fclose(fp);
+
+		use_custom_config("smb.conf", SAMBA_CONF);
+		run_postconf("smb", SAMBA_CONF);
+		chmod(SAMBA_CONF, 0644);
+	}
+
 	free_disk_data(&disks_info);
 	return 0;
 }
