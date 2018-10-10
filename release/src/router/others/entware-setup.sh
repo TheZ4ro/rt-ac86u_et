@@ -146,10 +146,4 @@ EOF
 eval sed -i 's,__Partition__,$entPartition,g' /jffs/scripts/post-mount
 chmod +x /jffs/scripts/post-mount
 
-if [ "$(nvram get jffs2_scripts)" != "1" ] ; then
-  echo -e "$INFO Enabling custom scripts and configs from /jffs..."
-  nvram set jffs2_scripts=1
-  nvram commit
-fi
-
 wget -qO - $INST_URL | sh
