@@ -1,3 +1,10 @@
+RT-AC86U Stock firmware + 
+1. Entware
+2. Scripts
+ 2-1. services-start, services-stop, wan-start, firewall-start, nat-start, init-start, pre-mount, post-mount, unmount, ddns-start
+ 2-2. smb.postconf, smb.conf.add, dnsmasq.postconf, dnsmasq.conf.add
+3. ipset, nano, lsof
+
 The GPL source is created for ASUS wireless router related products. Please visit the ASUS support site (http://support.asus.com) to get the latest GPL tarball.It has a lot in common with many wireless router open source projects, including Oleg/Tomato/DD-WRT/OpenWRT. Thanks the developers of those projects for making the source code available.
 
 Set Up Environment(Tested in Fedora 8/9 and Ubuntu)
