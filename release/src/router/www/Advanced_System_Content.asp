@@ -1311,14 +1311,6 @@ function change_hddSpinDown(obj_value) {
 		$("#usb_idle_timeout_tr").css("display", "");
 	}
 }
-function warn_jffs_format(){
-	var msg = "WARNING: Erasing the JFFS partition will also wipe out some configuration elements such as OpenVPN certificates";
-	if (hnd_support)
-		msg += ", and various router settings"
-	msg += ".\n\nMake sure you are certain you wish to proceed with this operation.";
-	alert(msg);
-}
-
 </script>
 </head>
 
@@ -1410,20 +1402,6 @@ function warn_jffs_format(){
 						<div style="margin:-25px 0px 5px 175px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 						<span id="alert_msg2" style="color:#FC0;margin-left:8px;display:inline-block;"></span>
 					
-					</td>
-				</tr>
-			</table>
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-				<thead>
-					<tr>
-						<td colspan="2">Persistent JFFS2 partition</td>
-					</tr>
-				</thead>
-				<tr>
-					<th>Format JFFS partition at next boot</th>
-					<td>
-						<input type="radio" name="jffs2_format" value="1" onclick="warn_jffs_format();" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_format" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 			</table>
