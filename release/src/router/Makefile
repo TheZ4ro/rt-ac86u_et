@@ -1178,7 +1178,7 @@ obj-$(RTCONFIG_STRACE) += strace
 
 obj-$(RTCONFIG_LLDP) += openlldp
 
-obj-n += lsof
+obj-y += lsof
 obj-$(RTCONFIG_IPERF) += iperf
 
 obj-$(RTCONFIG_PUSH_EMAIL) += openssl
@@ -1228,6 +1228,10 @@ obj-$(RTCONFIG_BONDING) += ifenslave
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
 
 obj-$(RTCONFIG_TRANSMISSION) += Transmission curl-7.21.7 libevent-2.0.21
+
+# Begin merlin add-ons
+obj-y += ncurses-6.0
+obj-y += nano
 
 ifeq ($(RTCONFIG_BCMARM),y)
 obj-y += libnfnetlink
@@ -2715,7 +2719,7 @@ endif
 dnsmasq:
 	@$(SEP)
 	@$(MAKE) -C dnsmasq \
-	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_ID -DNO_AUTH -DNO_IPSET -DNO_LOOP -DNO_INOTIFY \
+	COPTS="-DHAVE_BROKEN_RTC -DHAVE_LEASEFILE_EXPIRE -DNO_ID -DNO_AUTH -DNO_LOOP -DNO_INOTIFY \
 		$(if $(RTCONFIG_IPV6),-DUSE_IPV6,-DNO_IPV6) \
 		$(if $(RTCONFIG_USB_EXTRAS)||$(RTCONFIG_TR069),,-DNO_SCRIPT) \
 		$(if $(RTCONFIG_USB_EXTRAS),,-DNO_TFTP)" \
@@ -5295,11 +5299,11 @@ curl-7.21.7-install: curl-7.21.7
 	install -D curl-7.21.7/lib/.libs/libcurl.so.4.2.0 $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
 	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/lib/libcurl.so.4.2.0
 	cd $(INSTALLDIR)/curl-7.21.7/usr/lib && ln -sf libcurl.so.4.2.0 libcurl.so && ln -sf libcurl.so.4.2.0 libcurl.so.4
-ifeq ($(RTCONFIG_SPEEDTEST),y)
+#ifeq ($(RTCONFIG_SPEEDTEST),y)
 	# for speedtest
 	install -D curl-7.21.7/src/.libs/curl $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
 	$(STRIP) $(INSTALLDIR)/curl-7.21.7/usr/sbin/curl
-endif
+#endif
 
 curl-7.21.7-clean:
 	[ ! -f curl-7.21.7/Makefile ] || $(MAKE) -C curl-7.21.7 clean
@@ -6723,38 +6727,62 @@ libical-2.0.0-install:
 		ln -sf libicalvcal.so.2.0.0 libicalvcal.so.2
 
 ncurses-6.0/Makefile: ncurses-6.0/configure
-	cd ncurses-6.0 && $(CONFIGURE)\
-		--prefix=/usr --exec_prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib\
-		--sysconfdir=/etc --datadir=/usr/share --localstatedir=/var --mandir=/usr/man\
-		--without-normal --with-debug --with-shared\
-		--without-tests --without-progs --without-manpages \
-		CFLAGS="-I$(STAGEDIR)/usr/local/include"\
-		LDFLAGS="-L$(STAGEDIR)/usr/local/lib -ldl -lpthread"
+	cd ncurses-6.0 && $(CONFIGURE) \
+		CFLAGS="$(EXTRACFLAGS) -Os -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections -fPIC" \
+		LDFLAGS="$(LDFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(STAGEDIR)/usr/lib" \
+		$(if $(HND_ROUTER),CPPFLAGS="-P",) \
+		--prefix=/usr --without-cxx --without-cxx-binding \
+		--enable-echo --enable-const --enable-overwrite --disable-rpath --without-ada \
+		$(if $(RTCONFIG_BCMARM),--enable-widec,) \
+		--without-debug --without-manpages --without-profile --without-progs --without-tests \
+		--disable-home-terminfo --with-normal --with-shared --with-build-cppflags=-D_GNU_SOURCE \
+		--enable-pc-files \
+		--disable-termcap --disable-database --with-fallbacks="xterm,vt100,vt200,linux,ansi,xterm-256color"
+#		--with-default-terminfo-dir=/usr/share/terminfo --with-terminfo-dirs=/usr/share/terminfo
 
 ncurses-6.0: ncurses-6.0/Makefile
-	$(MAKE) -C $@ && $(MAKE) $@-stage
+	@$(SEP)
+	cd ncurses-6.0 && $(MAKE) -C ncurses && $(MAKE) -C misc pc-files
 
 ncurses-6.0-clean:
 	[ ! -f ncurses-6.0/Makefile ] || $(MAKE) -C ncurses-6.0 distclean
 
 ncurses-6.0-install: ncurses-6.0
-	install -D ncurses-6.0/lib/libform.so.6.0 $(INSTALLDIR)/ncurses-6.0/usr/lib/libform.so.6.0
-	install -D ncurses-6.0/lib/libmenu.so.6.0 $(INSTALLDIR)/ncurses-6.0/usr/lib/libmenu.so.6.0
+ifeq ($(RTCONFIG_BCMARM),y)
+	install -D ncurses-6.0/lib/libncursesw.so.6.0 $(INSTALLDIR)/ncurses-6.0/usr/lib/libncursesw.so.6.0
+	cd $(INSTALLDIR)/ncurses-6.0/usr/lib && \
+		ln -sf libncursesw.so.6.0 libncursesw.so.6 &&\
+		ln -sf libncursesw.so.6.0 libncursesw.so
+else
 	install -D ncurses-6.0/lib/libncurses.so.6.0 $(INSTALLDIR)/ncurses-6.0/usr/lib/libncurses.so.6.0
-	install -D ncurses-6.0/lib/libpanel.so.6.0 $(INSTALLDIR)/ncurses-6.0/usr/lib/libpanel.so.6.0
-	$(STRIP) $(INSTALLDIR)/ncurses-6.0/usr/lib/libform.so.6.0
-	$(STRIP) $(INSTALLDIR)/ncurses-6.0/usr/lib/libmenu.so.6.0
-	$(STRIP) $(INSTALLDIR)/ncurses-6.0/usr/lib/libncurses.so.6.0
-	$(STRIP) $(INSTALLDIR)/ncurses-6.0/usr/lib/libpanel.so.6.0
 	cd $(INSTALLDIR)/ncurses-6.0/usr/lib && \
 		ln -sf libncurses.so.6.0 libncurses.so.6 &&\
-		ln -sf libncurses.so.6.0 libncurses.so &&\
-		ln -sf libform.so.6.0 libform.so.6 &&\
-		ln -sf libform.so.6.0 libform.so &&\
-		ln -sf libmenu.so.6.0 libmenu.so.6 &&\
-		ln -sf libmenu.so.6.0 libmenu.so &&\
-		ln -sf libpanel.so.6.0 libpanel.so.6 &&\
-		ln -sf libpanel.so.6.0 libpanel.so
+		ln -sf libncurses.so.6.0 libncurses.so
+endif
+	$(STRIP) $(INSTALLDIR)/ncurses-6.0/usr/lib/*.so.*
+
+# Start merlin components
+nano/Makefile:
+	cd nano && \
+	autoreconf -i -f && $(CONFIGURE) --prefix=$(INSTALLDIR)/nano/usr --sysconfdir=/jffs/configs \
+		CFLAGS="$(EXTRACFLAGS) -Os -I$(TOP)/ncurses-6.0/include -ffunction-sections -fdata-sections" \
+		LDFLAGS="$(LDFLAGS) -L$(TOP)/ncurses-6.0/lib -ffunction-sections -fdata-sections -Wl,--gc-sections" \
+		PKG_CONFIG_LIBDIR="$(TOP)/ncurses-6.0/misc" PKG_CONFIG_PATH="$(TOP)/ncurses-6.0/misc" \
+		$(if $(RTCONFIG_BCMARM),ac_cv_lib_ncursesw_get_wch=yes --enable-utf8,ac_cv_lib_ncursesw_get_wch=no --enable-tiny) \
+		--disable-speller --disable-extra --disable-tabcomp --enable-wrapping --disable-glibtest \
+		--disable-libmagic --disable-nls
+
+nano-clean:
+	-@$(MAKE) -C nano distclean
+	@rm -f nano/Makefile
+
+nano-install:
+	@$(MAKE) -C nano install-exec INSTALLDIR=$(INSTALLDIR)/nano/usr/bin/nano
+	$(STRIP) $(INSTALLDIR)/nano/usr/bin/nano
+
+nano: ncurses-6.0 nano/Makefile
+	@$(SEP)
+	$(MAKE) -C $@
 
 libnfnetlink/stamp-h1:
 	cd $(TOP)/libnfnetlink && CC=$(CC) STRIP=$(STRIP) \
@@ -6794,8 +6822,6 @@ libmnl-install: libmnl
 	install libmnl/src/.libs/libmnl.so.0.1.0 $(INSTALLDIR)/libmnl/usr/lib/libmnl.so.0.1.0
 	$(STRIP) $(INSTALLDIR)/libmnl/usr/lib/libmnl.so.0.1.0
 	cd $(INSTALLDIR)/libmnl/usr/lib/ && \
-
-
 		ln -sf libmnl.so.0.1.0 libmnl.so.0 && \
 		ln -sf libmnl.so.0.1.0 libmnl.so
 
@@ -6824,7 +6850,6 @@ ipset_arm-install:
 	$(STRIP) $(INSTALLDIR)/ipset_arm/usr/lib/libipset.so.3.6.0
 	$(STRIP) $(INSTALLDIR)/ipset_arm/usr/sbin/ipset
 	cd $(INSTALLDIR)/ipset_arm/usr/lib/ && \
-
 		ln -sf libipset.so.3.6.0 libipset.so.3 && \
 		ln -sf libipset.so.3.6.0 libipset.so
 
