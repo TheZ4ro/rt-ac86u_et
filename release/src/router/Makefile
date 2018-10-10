@@ -6133,7 +6133,7 @@ wget/Makefile.in: wget/Makefile.am
 
 wget/Makefile: wget/Makefile.in
 	cd wget && $(CONFIGURE) \
-		--with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl \
+		--with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl --sysconfdir=/etc \
 		--disable-opie --disable-ntlm --disable-debug --disable-nls --disable-rpath \
 		$(if $(RTCONFIG_IPV6),,--disable-ipv6) --disable-iri --without-included-regex  \
 		--disable-dependency-tracking \
