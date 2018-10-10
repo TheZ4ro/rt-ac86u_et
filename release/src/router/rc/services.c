@@ -1637,10 +1637,6 @@ void start_dnsmasq(void)
 		write_static_leases(fp);
 	}
 
-	/* Protect against VU#598349 */
-	fprintf(fp,"dhcp-name-match=set:wpad-ignore,wpad\n"
-		   "dhcp-ignore-names=tag:wpad-ignore\n");
-
 	append_custom_config("dnsmasq.conf",fp);
 	fclose(fp);
 
@@ -3139,7 +3135,10 @@ start_ddns(void)
 		service = "dyndns", asus_ddns=3;
 	else if (strcmp(server, "WWW.ORAY.COM")==0) {
 		service = "peanuthull", asus_ddns = 2;
-	} else {
+	}
+	else if (strcmp(server, "CUSTOM")==0)
+		service = "";
+	else {
 		logmessage("start_ddns", "Error ddns server name: %s\n", server);
 		return 0;
 	}
@@ -3204,14 +3203,15 @@ start_ddns(void)
 			     "-b", "/tmp/ddns.cache", NULL };
 			_eval(argv, NULL, 0, &pid);
 		}
-	} else {	// Custom DDNS
+	else {	// Custom DDNS
 		// Block until it completes and updates the DDNS update results in nvram
 		run_custom_script_blocking("ddns-start", wan_ip, NULL);
 		return 0;
 	}
 
 	run_custom_script("ddns-start", wan_ip);
-	return 0;}
+	return 0;
+}
 
 void
 stop_ddns(void)
@@ -14037,6 +14037,28 @@ int service_main(int argc, char *argv[])
 	notify_rc(argv[1]);
 	printf("\nDone.\n");
 	return 0;
+}
+
+// Takes one argument:  0 = update failure
+//                      1 (or missing argument) = update success
+int
+ddns_custom_updated_main(int argc, char *argv[])
+{
+	if ((argc == 2 && !strcmp(argv[1], "1")) || (argc == 1)) {
+		nvram_set("ddns_status", "1");
+		nvram_set("ddns_updated", "1");
+		nvram_set("ddns_return_code", "200");
+		nvram_set("ddns_return_code_chk", "200");
+		nvram_set("ddns_server_x_old", nvram_safe_get("ddns_server_x"));
+		nvram_set("ddns_hostname_old", nvram_safe_get("ddns_hostname_x"));
+		logmessage("ddns", "Completed custom ddns update");
+	} else {
+		nvram_set("ddns_return_code", "unknown_error");
+		nvram_set("ddns_return_code_chk", "unknown_error");
+		logmessage("ddns", "Custom ddns update failed");
+	}
+
+        return 0;
 }
 
 #ifdef RTCONFIG_CAPTIVE_PORTAL

@@ -57,6 +57,7 @@ void run_custom_script(char *name, char *args)
 
 	snprintf(script, sizeof(script), "/jffs/scripts/%s", name);
 
+	if(f_exists(script)) {
 		if (args)
 			logmessage("custom_script" ,"Running %s (args: %s)", script, args);
 		else
@@ -72,6 +73,8 @@ void run_custom_script_blocking(char *name, char *arg1, char *arg2)
 
 	snprintf(script, sizeof(script), "/jffs/scripts/%s", name);
 
+
+	if(f_exists(script)) {
 		if (arg1)
 			logmessage("custom_script" ,"Running %s (args: %s %s) - max timeout = 120s", script, arg1, (arg2 ? arg2 : ""));
 		else
@@ -100,6 +103,7 @@ void use_custom_config(char *config, char *target)
 
         snprintf(filename, sizeof(filename), "/jffs/configs/%s", config);
 
+	if (check_if_file_exist(filename)) {
 		logmessage("custom config", "Using custom %s config file.", filename);
 		eval("cp", filename, target, NULL);
 	}
@@ -112,6 +116,7 @@ void append_custom_config(char *config, FILE *fp)
 
 	snprintf(filename, sizeof(filename), "/jffs/configs/%s.add", config);
 
+	if (check_if_file_exist(filename)) {
 		logmessage("custom config", "Appending content of %s.", filename);
 		fappend(fp, filename);
 	}

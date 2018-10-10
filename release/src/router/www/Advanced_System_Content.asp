@@ -1311,6 +1311,14 @@ function change_hddSpinDown(obj_value) {
 		$("#usb_idle_timeout_tr").css("display", "");
 	}
 }
+function warn_jffs_format(){
+	var msg = "WARNING: Erasing the JFFS partition will also wipe out some configuration elements such as OpenVPN certificates";
+	if (hnd_support)
+		msg += ", and various router settings"
+	msg += ".\n\nMake sure you are certain you wish to proceed with this operation.";
+	alert(msg);
+}
+
 </script>
 </head>
 
