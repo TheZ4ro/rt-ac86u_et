@@ -90,26 +90,26 @@ RC_EXT_NO1=$(shell expr $(RCNO) + 1)
 RC_EXT_NO=$(shell expr $(RC_EXT_NO1) \* 10000)
 
 # At runtime, set the tag of RCNO.
-export RUN_TAG=$(shell git tag -fa asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)$(RCSTRING) -m "Released $(RCSTRING)" HEAD)
+#export RUN_TAG=$(shell git tag -fa asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)$(RCSTRING) -m "Released $(RCSTRING)" HEAD)
 else
 RCSTRING=""
 RC_EXT_NO=0
 endif
 EXTENDNO1=$(shell git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)..HEAD | wc -l)
 
-ifeq ($(BRANCH),)
-include ./router/extendno.conf
-else
-ifneq ($(EXTENDTYPE),)
-EXSTRING="-$(EXTENDTYPE)"
-else
-EXSTRING=
-endif
-export EXTENDNO := $(shell expr $(EXTENDNO1) + $(RC_EXT_NO))-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")$(EXSTRING)
-endif
+#ifeq ($(BRANCH),)
+#include ./router/extendno.conf
+#else
+#ifneq ($(EXTENDTYPE),)
+#EXSTRING="-$(EXTENDTYPE)"
+#else
+#EXSTRING=
+#endif
+#export EXTENDNO := $(shell expr $(EXTENDNO1) + $(RC_EXT_NO))-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")$(EXSTRING)
+#endif
 
 ifeq ($(EXTENDNO),)
-export EXTENDNO := 0-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")
+export EXTENDNO := 0-g$(shell git log --pretty=format:'%h' -n 1)
 endif
 
 export SWPJNAME := $(shell git branch | grep "*" | grep "swpj-" | sed 's/.*swpj-//g')
@@ -136,6 +136,9 @@ ifeq ($(HND_ROUTER),y)
 export CONFIG_BCMWL5=y
 export CONFIG_LINUX26=y
 	# its multi-arch in 94908, specify ARCH in kbuild result bad
+endif
+ifneq ($(BUILDREV),)
+export BUILDREV := -g$(shell git log --pretty=format:'%h' -n 1)
 endif
 -include .config
 #
@@ -214,9 +217,9 @@ KERN_SIZE_OPT ?= y
 endif
 
 ifeq ($(FAKEID),y)
-export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)_$(SWPJVER)$(FORCE_EN)
+export IMGNAME := $(BUILD_NAME)_$(FORCE_SN)_$(SWPJVER)$(FORCE_EN)$(BUILDREV)
 else
-export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)
+export IMGNAME := $(BUILD_NAME)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(BUILDREV)
 endif
 
 ifeq ($(BUILD_NAME),DSL-AC68U)
@@ -375,7 +378,7 @@ ifneq ($(RCNO),)
 else
 	@echo '#define RT_RCNO NULL' >> router/shared/version.h
 endif
-	@echo '#define RT_EXTENDNO "$(FORCE_EN)"' >> router/shared/version.h
+	@echo '#define RT_EXTENDNO "$(FORCE_EN)$(BUILDREV)"' >> router/shared/version.h
 else
 	@echo '#define RT_SERIALNO "$(SERIALNO)"' >> router/shared/version.h
 ifneq ($(RCNO),)
@@ -383,7 +386,7 @@ ifneq ($(RCNO),)
 else
 	@echo '#define RT_RCNO NULL' >> router/shared/version.h
 endif
-	@echo '#define RT_EXTENDNO "$(EXTENDNO)"' >> router/shared/version.h
+	@echo '#define RT_EXTENDNO "$(EXTENDNO)$(BUILDREV)"' >> router/shared/version.h
 endif
 	@echo '#define RT_SWPJVERNO "$(SWPJVERNO)"' >> router/shared/version.h
 	@echo '#define RT_BUILD_NAME "$(BUILD_NAME)"' >> router/shared/version.h
@@ -398,8 +401,8 @@ else
 endif
 	@echo '#endif' >> router/shared/version.h
 endif
-	@echo '$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER) $(BUILD_TIME)' > router/shared/version
-	@echo 'EXTENDNO=$(EXTENDNO)' > router/extendno.conf
+	@echo '$(BUILD_NAME) $(SERIALNO)-$(EXTENDNO)$(BUILDREV) $(BUILD_TIME)' > router/shared/version
+	@echo 'EXTENDNO=$(EXTENDNO)$(BUILDREV)' > router/extendno.conf
 
 rt_ver_ntools:
 	-@rm -f ntools/version
